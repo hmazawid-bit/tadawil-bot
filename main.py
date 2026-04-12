@@ -1,14 +1,14 @@
 import os, json, time, schedule
 import yfinance as yf
 import pandas_ta as ta
-from google import genai
+import google.generativeai as genai
 import requests
 
 GEMINI_KEY = os.environ["GEMINI_API_KEY"]
 BOT_TOKEN  = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID    = os.environ["TELEGRAM_CHAT_ID"]
 
-client = genai.Client(api_key=GEMINI_KEY)
+genai.configure(api_key=GEMINI_KEY)
 
 STOCKS = [
     # مصرفي
@@ -278,9 +278,7 @@ MA20: {d['ma20']}  |  MA50: {d['ma50']}
 }}"""
 
     try:
-        resp = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
+        resp = model.generate_content(prompt)
         )
         text = resp.text.replace("```json","").replace("```","").strip()
         result = json.loads(text)
