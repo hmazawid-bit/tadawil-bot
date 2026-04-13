@@ -83,16 +83,12 @@ def get_data(symbol):
 
 def passes_filters(d):
     reasons = []
-    if not (35 <= d["rsi"] <= 65):
+    if not (30 <= d["rsi"] <= 70):
         reasons.append(f"RSI ({d['rsi']})")
-    if d["price"] < d["ma20"]:
-        reasons.append("تحت MA20")
-    if d["macd"] < d["macd_signal"]:
-        reasons.append("MACD سلبي")
-    if d["vol_ratio"] < 1.2:
+    if d["price"] < d["ma50"]:
+        reasons.append("تحت MA50")
+    if d["vol_ratio"] < 0.8:
         reasons.append(f"حجم ضعيف ({d['vol_ratio']}x)")
-    if d["dist_high52"] < 5:
-        reasons.append("قرب أعلى 52 أسبوع")
     return len(reasons) == 0, reasons
 
 def get_signal(name, d):
