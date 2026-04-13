@@ -37,10 +37,6 @@ STOCKS = [
     {"symbol": "3080.SR", "name": "أسمنت الشمالية"},
     {"symbol": "3090.SR", "name": "أسمنت طبوك"},
     {"symbol": "3091.SR", "name": "أسمنت نجران"},
-    # اتصالات وتقنية
-    {"symbol": "7010.SR", "name": "STC"},
-    {"symbol": "7020.SR", "name": "موبايلي"},
-    {"symbol": "7030.SR", "name": "زين السعودية"},
     # تجزئة وخدمات
     {"symbol": "4003.SR", "name": "BinDawood"},
     {"symbol": "4040.SR", "name": "أسواق"},
