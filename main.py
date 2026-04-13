@@ -12,18 +12,60 @@ genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 STOCKS = [
+    # طاقة وبتروكيماويات
     {"symbol": "2222.SR", "name": "أرامكو"},
-    {"symbol": "1120.SR", "name": "الراجحي"},
-    {"symbol": "1180.SR", "name": "الأهلي"},
     {"symbol": "2010.SR", "name": "سابك"},
-    {"symbol": "7010.SR", "name": "STC"},
-    {"symbol": "6001.SR", "name": "المراعي"},
-    {"symbol": "1050.SR", "name": "بنك الرياض"},
-    {"symbol": "4200.SR", "name": "تداول"},
+    {"symbol": "2020.SR", "name": "سابك للمغذيات"},
+    {"symbol": "2060.SR", "name": "كيان"},
     {"symbol": "2082.SR", "name": "أكوا باور"},
-    {"symbol": "4081.SR", "name": "المملكة القابضة"},
-    {"symbol": "1211.SR", "name": "معادن"},
+    {"symbol": "2090.SR", "name": "النمالج"},
+    {"symbol": "2310.SR", "name": "سبكيم"},
+    {"symbol": "2360.SR", "name": "بترورابغ"},
     {"symbol": "2380.SR", "name": "بتروكيم"},
+    {"symbol": "2230.SR", "name": "السعودية للكهرباء"},
+    # صناعة وتعدين
+    {"symbol": "1211.SR", "name": "معادن"},
+    {"symbol": "2050.SR", "name": "سافكو"},
+    {"symbol": "2130.SR", "name": "التصنيع"},
+    {"symbol": "2140.SR", "name": "أنابيب"},
+    {"symbol": "3008.SR", "name": "حديد"},
+    {"symbol": "3004.SR", "name": "الكابلات"},
+    # أسمنت
+    {"symbol": "3010.SR", "name": "أسمنت اليمامة"},
+    {"symbol": "3020.SR", "name": "أسمنت العربية"},
+    {"symbol": "3030.SR", "name": "أسمنت السعودية"},
+    {"symbol": "3040.SR", "name": "أسمنت القصيم"},
+    {"symbol": "3050.SR", "name": "أسمنت الجنوب"},
+    {"symbol": "3060.SR", "name": "أسمنت ينبع"},
+    {"symbol": "3080.SR", "name": "أسمنت الشمالية"},
+    {"symbol": "3090.SR", "name": "أسمنت طبوك"},
+    {"symbol": "3091.SR", "name": "أسمنت نجران"},
+    # اتصالات وتقنية
+    {"symbol": "7010.SR", "name": "STC"},
+    {"symbol": "7020.SR", "name": "موبايلي"},
+    {"symbol": "7030.SR", "name": "زين السعودية"},
+    {"symbol": "7200.SR", "name": "أريبيان إنترنت"},
+    {"symbol": "7204.SR", "name": "أمن للتقنية"},
+    # تجزئة وخدمات
+    {"symbol": "4003.SR", "name": "BinDawood"},
+    {"symbol": "4040.SR", "name": "أسواق"},
+    {"symbol": "4081.SR", "name": "المملكة القابضة"},
+    {"symbol": "4082.SR", "name": "مجموعة MBC"},
+    # غذاء وزراعة
+    {"symbol": "6001.SR", "name": "المراعي"},
+    {"symbol": "6002.SR", "name": "حلواني"},
+    {"symbol": "6010.SR", "name": "سدافكو"},
+    {"symbol": "6004.SR", "name": "الغذائية"},
+    {"symbol": "6014.SR", "name": "أنعام"},
+    # عقارات
+    {"symbol": "4090.SR", "name": "دار الأركان"},
+    {"symbol": "4100.SR", "name": "مكة"},
+    {"symbol": "4110.SR", "name": "جبل عمر"},
+    {"symbol": "4150.SR", "name": "طيبة"},
+    {"symbol": "4180.SR", "name": "أملاك العقارية"},
+    # نقل ولوجستيات
+    {"symbol": "4261.SR", "name": "ناقلات"},
+    {"symbol": "4262.SR", "name": "البحري"},
 ]
 
 def send(msg):
@@ -47,10 +89,8 @@ def get_data(symbol):
         ma20     = close.rolling(20).mean()
         ma50     = close.rolling(50).mean()
         vol10    = volume.rolling(10).mean()
-
-        # بولنجر بدون اعتماد على اسم عمود محدد
-        bb_up   = close.rolling(20).mean() + 2 * close.rolling(20).std()
-        bb_low  = close.rolling(20).mean() - 2 * close.rolling(20).std()
+        bb_up    = close.rolling(20).mean() + 2 * close.rolling(20).std()
+        bb_low   = close.rolling(20).mean() - 2 * close.rolling(20).std()
 
         current_price = float(close.iloc[-1])
         prev_price    = float(close.iloc[-2])
@@ -107,7 +147,7 @@ MA20: {d['ma20']} | MA50: {d['ma50']}
 - TP1: ربح 3-5% | TP2: ربح 7-10%
 - نسبة المكافأة/المخاطرة لا تقل عن 2:1
 
-أجب بـ JSON فقط بدون أي نص:
+أجب بـ JSON فقط:
 {{"signal": "شراء قوي" او "شراء" او "انتظار", "confidence": 0-100, "entry": رقم, "sl": رقم, "tp1": رقم, "tp2": رقم, "rr_ratio": رقم, "reason": "سبب موجز"}}"""
 
         resp = model.generate_content(prompt)
@@ -123,7 +163,7 @@ MA20: {d['ma20']} | MA50: {d['ma50']}
 def run_scan():
     try:
         print("بدء المسح...")
-        send("🔍 <b>بدء مسح السوق السعودي...</b>")
+        send(f"🔍 <b>بدء مسح السوق السعودي</b>\n📊 {len(STOCKS)} سهم (بدون بنوك وتأمين)")
         buys = []
         filtered = []
 
@@ -135,12 +175,12 @@ def run_scan():
                     continue
                 passed, reasons = passes_filters(data)
                 if not passed:
-                    filtered.append(stock["name"])
+                    filtered.append(f"{stock['name']}: {', '.join(reasons)}")
                     continue
                 sig = get_signal(stock["name"], data)
                 if sig and "شراء" in sig.get("signal", ""):
                     buys.append({**stock, **data, **sig})
-                    print(f"  فرصة! {sig['signal']} @ {sig['entry']}")
+                    print(f"  ✅ {sig['signal']} @ {sig['entry']}")
             except Exception as e:
                 print(f"خطأ في {stock['name']}: {e}")
             time.sleep(2)
@@ -166,16 +206,21 @@ def run_scan():
             msg += "━━━━━━━━━━━━━━━\n⚠️ للأغراض التعليمية فقط"
             send(msg)
         else:
-            send(f"⏳ <b>لا توجد فرص اليوم</b>\nتم مسح {len(STOCKS)} سهم | مفلتر: {len(filtered)}")
+            msg  = f"⏳ <b>لا توجد فرص اليوم</b>\n"
+            msg += f"🔍 مسح {len(STOCKS)} سهم | مفلتر: {len(filtered)}\n\n"
+            msg += "<b>أسباب الاستبعاد:</b>\n"
+            for f in filtered[:10]:
+                msg += f"• {f}\n"
+            send(msg)
 
         print(f"اكتمل | فرص: {len(buys)} | مفلتر: {len(filtered)}")
 
     except Exception as e:
         print(f"خطأ عام: {e}")
-        send(f"⚠️ خطأ في المسح: {e}")
+        send(f"⚠️ خطأ: {e}")
 
 schedule.every().day.at("06:15").do(run_scan)
-print("النظام يعمل...")
+print(f"النظام يعمل | {len(STOCKS)} سهم")
 run_scan()
 
 while True:
