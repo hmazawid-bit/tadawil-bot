@@ -29,40 +29,28 @@ STOCKS = [
 def send(msg):
     try:
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        requests.post(url, json={
-            "chat_id": CHAT_ID,
-            "text": msg,
-            "parse_mode": "HTML"
-        }, timeout=10)
+        requests.post(url, json={"chat_id": CHAT_ID, "text": msg, "parse_mode": "HTML"}, timeout=10)
     except Exception as e:
         print(f"خطأ تيليجرام: {e}")
 
 def get_data(symbol):
     try:
-        df = yf.download(symbol, period="3mo", interval="1d",
-                         auto_adjust=True, progress=False)
+        df = yf.download(symbol, period="3mo", interval="1d", auto_adjust=True, progress=False)
         if df is None or df.empty or len(df) < 50:
             return None
 
         close  = df["Close"].squeeze().astype(float)
         volume = df["Volume"].squeeze().astype(float)
 
-        if len(close) < 50:
-            return None
-
         rsi_val  = ta.rsi(close, length=14)
         macd_val = ta.macd(close)
-        bb_val = ta.bbands(close)
-# اكتشاف اسم العمود تلقائياً
-bb_cols = bb_val.columns.tolist()
-bb_up_col  = [c for c in bb_cols if c.startswith("BBU")][0]
-bb_low_col = [c for c in bb_cols if c.startswith("BBL")][0]
         ma20     = close.rolling(20).mean()
         ma50     = close.rolling(50).mean()
         vol10    = volume.rolling(10).mean()
 
-        if rsi_val is None or macd_val is None or bb_val is None:
-            return None
+        # بولنجر بدون اعتماد على اسم عمود محدد
+        bb_up   = close.rolling(20).mean() + 2 * close.rolling(20).std()
+        bb_low  = close.rolling(20).mean() - 2 * close.rolling(20).std()
 
         current_price = float(close.iloc[-1])
         prev_price    = float(close.iloc[-2])
@@ -81,8 +69,8 @@ bb_low_col = [c for c in bb_cols if c.startswith("BBL")][0]
             "macd_signal": round(float(macd_val["MACDs_12_26_9"].iloc[-1]), 3),
             "ma20":        round(float(ma20.iloc[-1]), 2),
             "ma50":        round(float(ma50.iloc[-1]), 2),
-            "bb_up":  round(float(bb_val[bb_up_col].iloc[-1]), 2),
-"bb_low": round(float(bb_val[bb_low_col].iloc[-1]), 2),
+            "bb_up":       round(float(bb_up.iloc[-1]), 2),
+            "bb_low":      round(float(bb_low.iloc[-1]), 2),
             "volume":      int(current_vol),
             "avg_volume":  int(avg_vol),
             "vol_ratio":   round(current_vol / avg_vol, 2),
@@ -110,7 +98,6 @@ def passes_filters(d):
 def get_signal(name, d):
     try:
         prompt = f"""أنت محلل مضاربي متخصص في سوق تداول السعودي.
-
 السهم: {name}
 السعر: {d['price']} ﷼ | التغير: {d['change']}%
 RSI: {d['rsi']} | MACD: {d['macd']} / Signal: {d['macd_signal']}
@@ -125,12 +112,11 @@ MA20: {d['ma20']} | MA50: {d['ma50']}
 - نسبة المكافأة/المخاطرة لا تقل عن 2:1
 
 أجب بـ JSON فقط بدون أي نص:
-{{"signal": "شراء قوي" أو "شراء" أو "انتظار", "confidence": 0-100, "entry": رقم, "sl": رقم, "tp1": رقم, "tp2": رقم, "rr_ratio": رقم, "reason": "سبب موجز"}}"""
+{{"signal": "شراء قوي" او "شراء" او "انتظار", "confidence": 0-100, "entry": رقم, "sl": رقم, "tp1": رقم, "tp2": رقم, "rr_ratio": رقم, "reason": "سبب موجز"}}"""
 
         resp = model.generate_content(prompt)
         text = resp.text.replace("```json","").replace("```","").strip()
         result = json.loads(text)
-
         if result.get("rr_ratio", 0) < 2:
             return None
         return result
@@ -140,42 +126,33 @@ MA20: {d['ma20']} | MA50: {d['ma50']}
 
 def run_scan():
     try:
-        print("🔍 بدء المسح...")
+        print("بدء المسح...")
         send("🔍 <b>بدء مسح السوق السعودي...</b>")
-
-        buys     = []
+        buys = []
         filtered = []
 
         for i, stock in enumerate(STOCKS, 1):
             try:
                 print(f"[{i}/{len(STOCKS)}] {stock['name']}")
                 data = get_data(stock["symbol"])
-
                 if not data:
                     continue
-
                 passed, reasons = passes_filters(data)
                 if not passed:
                     filtered.append(stock["name"])
                     continue
-
                 sig = get_signal(stock["name"], data)
                 if sig and "شراء" in sig.get("signal", ""):
                     buys.append({**stock, **data, **sig})
-                    print(f"  ✅ {sig['signal']} @ {sig['entry']}")
-
+                    print(f"  فرصة! {sig['signal']} @ {sig['entry']}")
             except Exception as e:
                 print(f"خطأ في {stock['name']}: {e}")
-                continue
-
             time.sleep(2)
 
-        # إرسال النتائج
         if buys:
             buys.sort(key=lambda x: (-x["confidence"], -x.get("rr_ratio", 0)))
             msg  = "🟢 <b>فرص المضاربة اليوم - تداول</b>\n"
             msg += f"📅 {time.strftime('%Y-%m-%d')} | ⏰ {time.strftime('%H:%M')}\n\n"
-
             for b in buys:
                 sl_pct  = round((b['entry'] - b['sl'])  / b['entry'] * 100, 1)
                 tp1_pct = round((b['tp1'] - b['entry']) / b['entry'] * 100, 1)
@@ -190,32 +167,25 @@ def run_scan():
                 msg += f"🎯 <b>TP2: {b['tp2']} ﷼</b> (+{tp2_pct}%)\n"
                 msg += f"📈 RSI: {b['rsi']} | حجم: {b['vol_ratio']}x\n"
                 msg += f"💬 {b['reason']}\n\n"
-
-            msg += "━━━━━━━━━━━━━━━\n"
-            msg += "⚠️ للأغراض التعليمية فقط"
+            msg += "━━━━━━━━━━━━━━━\n⚠️ للأغراض التعليمية فقط"
             send(msg)
         else:
-            send(f"⏳ <b>لا توجد فرص اليوم</b>\nتم مسح {len(STOCKS)} سهم")
+            send(f"⏳ <b>لا توجد فرص اليوم</b>\nتم مسح {len(STOCKS)} سهم | مفلتر: {len(filtered)}")
 
-        print(f"✅ اكتمل | فرص: {len(buys)} | مفلتر: {len(filtered)}")
+        print(f"اكتمل | فرص: {len(buys)} | مفلتر: {len(filtered)}")
 
     except Exception as e:
-        print(f"خطأ عام في المسح: {e}")
+        print(f"خطأ عام: {e}")
         send(f"⚠️ خطأ في المسح: {e}")
 
-# كل يوم 6:15 UTC = 9:15 صباحاً بتوقيت الرياض
 schedule.every().day.at("06:15").do(run_scan)
-
-print("✅ النظام يعمل...")
-
-# تشغيل أولي
+print("النظام يعمل...")
 run_scan()
 
-# حلقة مستمرة محمية
 while True:
     try:
         schedule.run_pending()
         time.sleep(30)
     except Exception as e:
-        print(f"خطأ في الحلقة: {e}")
+        print(f"خطأ: {e}")
         time.sleep(30)
