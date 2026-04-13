@@ -13,12 +13,10 @@ model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
 STOCKS = [
     # طاقة وبتروكيماويات
-    {"symbol": "2222.SR", "name": "أرامكو"},
     {"symbol": "2010.SR", "name": "سابك"},
     {"symbol": "2020.SR", "name": "سابك للمغذيات"},
     {"symbol": "2060.SR", "name": "كيان"},
     {"symbol": "2082.SR", "name": "أكوا باور"},
-    {"symbol": "2090.SR", "name": "النمالج"},
     {"symbol": "2310.SR", "name": "سبكيم"},
     {"symbol": "2360.SR", "name": "بترورابغ"},
     {"symbol": "2380.SR", "name": "بتروكيم"},
@@ -44,8 +42,6 @@ STOCKS = [
     {"symbol": "7010.SR", "name": "STC"},
     {"symbol": "7020.SR", "name": "موبايلي"},
     {"symbol": "7030.SR", "name": "زين السعودية"},
-    {"symbol": "7200.SR", "name": "أريبيان إنترنت"},
-    {"symbol": "7204.SR", "name": "أمن للتقنية"},
     # تجزئة وخدمات
     {"symbol": "4003.SR", "name": "BinDawood"},
     {"symbol": "4040.SR", "name": "أسواق"},
