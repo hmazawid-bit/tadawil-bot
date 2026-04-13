@@ -9,7 +9,7 @@ BOT_TOKEN  = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID    = os.environ["TELEGRAM_CHAT_ID"]
 
 genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
 STOCKS = [
     # طاقة وبتروكيماويات
