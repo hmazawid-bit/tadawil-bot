@@ -52,7 +52,11 @@ def get_data(symbol):
 
         rsi_val  = ta.rsi(close, length=14)
         macd_val = ta.macd(close)
-        bb_val   = ta.bbands(close)
+        bb_val = ta.bbands(close)
+# اكتشاف اسم العمود تلقائياً
+bb_cols = bb_val.columns.tolist()
+bb_up_col  = [c for c in bb_cols if c.startswith("BBU")][0]
+bb_low_col = [c for c in bb_cols if c.startswith("BBL")][0]
         ma20     = close.rolling(20).mean()
         ma50     = close.rolling(50).mean()
         vol10    = volume.rolling(10).mean()
@@ -77,8 +81,8 @@ def get_data(symbol):
             "macd_signal": round(float(macd_val["MACDs_12_26_9"].iloc[-1]), 3),
             "ma20":        round(float(ma20.iloc[-1]), 2),
             "ma50":        round(float(ma50.iloc[-1]), 2),
-            "bb_up":       round(float(bb_val["BBU_5_2.0"].iloc[-1]), 2),
-            "bb_low":      round(float(bb_val["BBL_5_2.0"].iloc[-1]), 2),
+            "bb_up":  round(float(bb_val[bb_up_col].iloc[-1]), 2),
+"bb_low": round(float(bb_val[bb_low_col].iloc[-1]), 2),
             "volume":      int(current_vol),
             "avg_volume":  int(avg_vol),
             "vol_ratio":   round(current_vol / avg_vol, 2),
